@@ -11,7 +11,7 @@ tag = file.read(3)
 abort("Invalid EmbroiderySummary tag") unless tag == "\x00\x02\x00"
 
 cursor_bytes_to_eof = file.tell
-bytes_to_eof = file.read(4).unpack("N").first   # TODO also needs to be modified
+bytes_to_eof = file.read(4).unpack("N").first   # also needs to be modified
 
 settings_string_length = file.read(2).unpack("n").first
 settings_string = file.read(settings_string_length)
