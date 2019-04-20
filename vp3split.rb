@@ -76,6 +76,7 @@ design_block_count.times do
   ######
   # cursor_bytes_to_end_of_design
   #  4 (bytes_to_end_of_design)
+  #
   #  8 (design_center_x/y)
   #  3 (unknown)
   # 24 (width/height)
@@ -86,8 +87,8 @@ design_block_count.times do
   # production_string_length
   #  2 (color_block_count)
   # =========
-  # 69 + design_notes_string_length + production_string_length
-  # puts "Expected cursor = #{cursor_bytes_to_end_of_design + 69 + design_notes_string_length + production_string_length}"
+  # 65 + design_notes_string_length + production_string_length
+  #puts "Expected cursor 1st colorblock = #{cursor_bytes_to_end_of_design + 65 + design_notes_string_length + production_string_length}"
   # Color blocks
 
   color_block = []
@@ -103,7 +104,7 @@ design_block_count.times do
     abort("Invalid ColorBlock tag") unless tag == "\x00\x05\x00"
 
     bytes_to_next_color_block = file.read(4).unpack("N").first
-    color_block[color_nr][:blocksize] = bytes_to_next_color_block
+    color_block[color_nr][:blocksize] = bytes_to_next_color_block + 7  # 7 = tag + bytes_to_next_color_block
     color_block_data = file.read(bytes_to_next_color_block)
 
     # cursor + tag(3) + blocksize(4) + blocksize = next cursor
@@ -151,5 +152,14 @@ design_block_count.times do
 
   puts
   p color_block
+
+  puts "bytes_to_end_of_design = #{bytes_to_end_of_design}"
+  puts "design block size = #{65 + design_notes_string_length + production_string_length}"
+
+  total = 65 + design_notes_string_length + production_string_length
+  color_block.each do |color|
+    total += color[:blocksize]
+  end
+  puts "total = #{total}"
 
 end
