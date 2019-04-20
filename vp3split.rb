@@ -36,7 +36,11 @@ design_block_count.times do
   tag = file.read(3)
   abort("Invalid DesignBlock tag") unless tag == "\x00\x03\x00"
 
-  bytes_to_end_of_design = file.read(4).unpack("N")
+  cursor_bytes_to_end_of_design = file.tell
+  bytes_to_end_of_design = file.read(4).unpack("N").first  # !!! needs to be modified
+  puts
+  puts "Cursor = #{cursor_bytes_to_end_of_design}"
+  puts "Bytes to end of design = #{bytes_to_end_of_design}"
 
   design_center_x = file.read(4).unpack("N")
   design_center_y = file.read(4).unpack("N")
@@ -69,8 +73,28 @@ design_block_count.times do
   color_block_count = file.read(2).unpack("n").first
   puts "This design has #{color_block_count} colors"
 
-  # Color block
+  ######
+  # cursor_bytes_to_end_of_design
+  #  4 (bytes_to_end_of_design)
+  #  8 (design_center_x/y)
+  #  3 (unknown)
+  # 24 (width/height)
+  #  2 (design_notes_string_length)
+  # design_notes_string_length
+  # 24 (unknown)
+  #  2 (production_string_length)
+  # production_string_length
+  #  2 (color_block_count)
+  # =========
+  # 69 + design_notes_string_length + production_string_length
+  # puts "Expected cursor = #{cursor_bytes_to_end_of_design + 69 + design_notes_string_length + production_string_length}"
+  # Color blocks
+
+  color_block = []
   color_block_count.times do |color_nr|
+
+    cursor_color_block = file.tell
+    color_block[color_nr] = {:cursor => cursor_color_block}
 
     puts
     puts "Color \##{color_nr + 1}"
@@ -79,7 +103,10 @@ design_block_count.times do
     abort("Invalid ColorBlock tag") unless tag == "\x00\x05\x00"
 
     bytes_to_next_color_block = file.read(4).unpack("N").first
+    color_block[color_nr][:blocksize] = bytes_to_next_color_block
     color_block_data = file.read(bytes_to_next_color_block)
+
+    # cursor + tag(3) + blocksize(4) + blocksize = next cursor
 
     color_entries = color_block_data[8].unpack("C").first
     abort("Thread colors is #{color_entries} instead of 1") unless color_entries == 1
@@ -119,6 +146,10 @@ design_block_count.times do
     brand = color_block_data[offset, brand_length]
     puts "Brand: #{brand}"
 
+    #exit
   end
+
+  puts
+  p color_block
 
 end
