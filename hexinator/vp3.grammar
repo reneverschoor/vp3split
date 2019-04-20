@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.17">
+    <grammar name="VP3 grammar" start="id:71" author="rene" fileextension="vp3">
+        <description>Grammar for VP3 files
+Pfaff embroidery</description>
+        <scripts>
+            <script name="vp3script" type="ProcessResults" id="158">
+                <source language="Python">def init():
+	print &quot;hello init&quot;
+
+def processResult(result):
+	print &quot;hello result&quot;
+
+  	resultType = result.getType()
+
+	if resultType == RESULT_STRUCTURE_START_TYPE:
+		print(&quot;Structure Start&quot;)
+	else:
+		print(&quot;other&quot;)
+
+	level = result.getLevel()
+ 	print (level)
+
+	name = result.getName()
+
+	value = result.getValue()
+
+	if( value != None ):
+		type = value.getType()
+		if type == VALUE_BINARY:
+			startPos = result.getStartBytePos()
+			length = result.getByteLength()
+			byteView = result.getByteView()
+			for x in range(length):
+				byte = byteView.readByte(startPos + x)
+			print &quot;Binary&quot;
+		elif type == VALUE_NUMBER_UNSIGNED:
+			print &quot;Unsigned: &quot; + str(value.getUnsigned())
+		elif type == VALUE_NUMBER_SIGNED:
+			print &quot;Signed: &quot; + str(value.getSigned())
+		elif type == VALUE_NUMBER_FLOAT:
+			print &quot;Float: &quot; + str(value.getFloat())
+		elif type == VALUE_STRING:
+			print &quot;String: &quot; + value.getString()
+
+	print result.getStringRepresentation()
+
+def terminate():
+	print &quot;hello terminate&quot;
+</source>
+            </script>
+        </scripts>
+        <structure name="VP3 file" id="71" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <structure name="Header" id="72" length="8 + ProductionStringLength" alignment="0" fillcolor="FFFF7F">
+                <string name="MagicString" id="73" fillcolor="FFAA7F" type="fixed-length" length="6" encoding="ISO_8859-1:1987"/>
+                <number name="ProductionStringLength" id="74" fillcolor="55FFFF" type="integer" length="2"/>
+                <string name="ProductionString" id="75" fillcolor="AAFFFF" type="fixed-length" length="ProductionStringLength" encoding="UTF-16BE"/>
+            </structure>
+            <structure name="EmbroiderySummary" id="135" length="0" alignment="0" fillcolor="5500FF">
+                <number name="EmbroiderySummaryTag" id="137" fillcolor="FF0000" type="integer" length="3"/>
+                <number name="BytesToEOF" id="79" fillcolor="AAFF00" type="integer" length="4"/>
+                <number name="SettingsStringLength" id="138" fillcolor="00AA7F" type="integer" length="2"/>
+                <string name="SettingsString" id="139" fillcolor="00FF7F" type="fixed-length" length="SettingsStringLength" encoding="UTF-16BE"/>
+                <structure name="Extend" id="82" length="16" fillcolor="AAAA00">
+                    <number name="Right" id="140" fillcolor="AA0000" type="integer" length="4"/>
+                    <number name="Top" id="141" fillcolor="005500" type="integer" length="4"/>
+                    <number name="Left" id="142" fillcolor="AA0000" type="integer" length="4"/>
+                    <number name="Bottom" id="143" fillcolor="005500" type="integer" length="4"/>
+                </structure>
+                <number name="StitchTimeCount" id="144" fillcolor="AA5500" type="integer" length="4"/>
+                <number name="ThreadChangeCount" id="145" fillcolor="00FF00" type="integer" length="2"/>
+                <binary name="Unknown-2" id="146" fillcolor="AAAA00" length="1"/>
+                <number name="DesignBlockCount" id="147" fillcolor="FFAAFF" type="integer" length="2"/>
+            </structure>
+            <structure name="DesignBlock" id="149" valueexpression="DesignBlockCount">
+                <number name="DesignBlockTag" id="91" fillcolor="00FF00" type="integer" length="3"/>
+                <number name="BytesToEndOfDesign" id="92" fillcolor="00AAFF" type="integer" length="4"/>
+                <number name="DesignCenterX" id="93" fillcolor="AA5500" type="integer" length="4"/>
+                <number name="DesignCenterY" id="94" fillcolor="AA557F" type="integer" length="4"/>
+                <binary name="Unknown-1" id="95" fillcolor="AA0000" length="3"/>
+                <number name="MinHalfWidth" id="96" fillcolor="0000FF" type="integer" length="4"/>
+                <number name="PlusHalfWidth" id="97" fillcolor="AA55FF" type="integer" length="4"/>
+                <number name="MinHalfHeight" id="98" fillcolor="0000FF" type="integer" length="4"/>
+                <number name="PlusHalfHeight" id="99" fillcolor="AA55FF" type="integer" length="4"/>
+                <number name="Width" id="100" fillcolor="00AA00" type="integer" length="4"/>
+                <number name="Height" id="101" fillcolor="AAAA00" type="integer" length="4"/>
+                <number name="DesignNotesStringLength" id="102" fillcolor="55AAFF" type="integer" length="2"/>
+                <string name="DesignNotes" id="151" fillcolor="55AA00" type="fixed-length" length="DesignNotesStringLength" encoding="UTF-16BE"/>
+                <binary name="Unknown-2" id="152" fillcolor="00557F" length="24"/>
+                <number name="ProductionStringLength" id="153" fillcolor="FFAA7F" type="integer" length="2"/>
+                <string name="ProductionString" id="154" fillcolor="FFAA00" type="fixed-length" length="ProductionStringLength" encoding="UTF-16BE"/>
+                <number name="ColorBlocksInDesignBlock" id="106" fillcolor="FF0000" type="integer" length="2"/>
+            </structure>
+            <structure name="ColorBlock" id="107" length="BytesToNextBlock + 3 + 4" alignment="0" repeat="id:106" repeatmax="-1" valueexpression="ColorBlocksInDesignBlock">
+                <number name="ColorBlockTag" id="108" fillcolor="FF5500" type="integer" length="3"/>
+                <number name="BytesToNextBlock" id="109" fillcolor="FFAAFF" type="integer" length="4"/>
+                <number name="StartX" id="110" fillcolor="FFAA7F" type="integer" length="4"/>
+                <number name="StartY" id="111" fillcolor="FFFF7F" type="integer" length="4"/>
+                <number name="ColorEntries" id="112" fillcolor="00AA00" type="integer" length="1"/>
+                <number name="ColorMixing" id="113" fillcolor="00FF00" type="integer" length="1"/>
+                <number name="RRGGBB" id="114" fillcolor="00AA00" type="integer" length="4"/>
+                <number name="ColorPart" id="115" fillcolor="AAAA00" type="integer" length="1"/>
+                <number name="ColorLength" id="116" fillcolor="AAAAFF" type="integer" length="1"/>
+                <number name="Material" id="117" fillcolor="FFAA00" type="integer" length="1"/>
+                <number name="Weight" id="118" fillcolor="FF55FF" type="integer" length="1"/>
+                <number name="CatalogNumberLength" id="119" fillcolor="FFAA00" type="integer" length="2"/>
+                <string name="CatalogNumber" id="120" fillcolor="FFFF00" type="fixed-length" length="CatalogNumberLength" encoding="ISO_8859-1:1987"/>
+                <number name="ThreadDescriptionLength" id="121" fillcolor="FFFF7F" type="integer" length="2"/>
+                <string name="ThreadDescription" id="122" fillcolor="FFFF00" type="fixed-length" length="ThreadDescriptionLength" encoding="ISO_8859-1:1987"/>
+                <number name="BrandLength" id="123" fillcolor="FFAA00" type="integer" length="2"/>
+                <string name="Brand" id="124" fillcolor="FFAA7F" type="fixed-length" length="BrandLength" encoding="ISO_8859-1:1987"/>
+                <number name="TotalDisplacementX" id="125" fillcolor="AAAAFF" type="integer" length="4"/>
+                <number name="TotalDisplacementY" id="126" fillcolor="AAAA7F" type="integer" length="4"/>
+                <structure name="StitchData" id="127" length="StitchDataLength + 4 + 3" alignment="0" fillcolor="AAAAFF">
+                    <number name="StitchDataTag" id="128" fillcolor="FF557F" type="integer" length="3"/>
+                    <number name="StitchDataLength" id="129" fillcolor="FFFF7F" type="integer" length="4"/>
+                    <number name="StitchStart" id="130" fillcolor="FFAAFF" type="integer" length="3" display="hex"/>
+                </structure>
+                <number name="EndOfStitchData" id="132" fillcolor="5555FF" type="integer" length="1"/>
+            </structure>
+        </structure>
+    </grammar>
+</ufwb>
