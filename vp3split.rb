@@ -9,7 +9,10 @@ production_string = file.read(production_string_length)
 # EmbroiderySummary
 tag = file.read(3)
 abort("Invalid EmbroiderySummary tag") unless tag == "\x00\x02\x00"
-bytes_to_eof = file.read(4).unpack("N")
+
+cursor_bytes_to_eof = file.tell
+bytes_to_eof = file.read(4).unpack("N").first   # TODO also needs to be modified
+
 settings_string_length = file.read(2).unpack("n").first
 settings_string = file.read(settings_string_length)
 
@@ -185,7 +188,20 @@ cursor = color_block[0][:cursor]
 blocksize = color_block[0][:blocksize]
 file.pos = cursor
 colorblock = file.read(blocksize)
-out.write(colorblock
-)
+out.write(colorblock)
+
+# Update bytes_to_eof
+new_bytes_to_eof = file.stat.size        # total file size
+new_bytes_to_eof -= cursor_bytes_to_eof  # substract bytes before this field
+new_bytes_to_eof -= 4                    # substract length of this field itself
+# Substract all color blocks
+color_block.each do |color|
+  new_bytes_to_eof -= color[:blocksize]
+end
+# Add size of colorbloks
+new_bytes_to_eof += color_block[0][:blocksize]
+out.pos = cursor_bytes_to_eof
+out.write([total].pack("N"))
+
 file.close
 out.close
