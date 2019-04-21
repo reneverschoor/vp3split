@@ -11,7 +11,7 @@ tag = file.read(3)
 abort("Invalid EmbroiderySummary tag") unless tag == "\x00\x02\x00"
 
 cursor_bytes_to_eof = file.tell
-bytes_to_eof = file.read(4).unpack("N").first   # also needs to be modified
+bytes_to_eof = file.read(4).unpack("N").first   # needs to be modified
 
 settings_string_length = file.read(2).unpack("n").first
 settings_string = file.read(settings_string_length)
@@ -25,7 +25,7 @@ extend_bottom = file.read(4).unpack("N")
 stitch_time = file.read(4).unpack("N")
 
 thread_change_count = file.read(2).unpack("n").first
-puts "There are #{thread_change_count} colors in all designs"
+puts "There are #{thread_change_count} colors in all designs"  # needs to be modified
 
 unknown_c = file.read(1).unpack("h").first
 abort("Invalid unknown_c") unless unknown_c == "c"
@@ -39,7 +39,7 @@ tag = file.read(3)
 abort("Invalid DesignBlock tag") unless tag == "\x00\x03\x00"
 
 cursor_bytes_to_end_of_design = file.tell
-bytes_to_end_of_design = file.read(4).unpack("N").first  # !!! needs to be modified
+bytes_to_end_of_design = file.read(4).unpack("N").first  # needs to be modified
 #puts "Cursor = #{cursor_bytes_to_end_of_design}"
 #puts "Bytes to end of design = #{bytes_to_end_of_design}"
 
@@ -71,7 +71,7 @@ abort("Invalid unknown_10 element") unless unknown_10 == "\x01\x00"
 production_string_length = file.read(2).unpack("n").first
 production_string = file.read(production_string_length)
 
-color_block_count = file.read(2).unpack("n").first
+color_block_count = file.read(2).unpack("n").first  # needs to be modified
 puts "This design has #{color_block_count} colors"
 
 ######
@@ -201,7 +201,7 @@ end
 # Add size of colorbloks
 new_bytes_to_eof += color_block[0][:blocksize]
 out.pos = cursor_bytes_to_eof
-out.write([total].pack("N"))
+out.write([new_bytes_to_eof].pack("N"))
 
 file.close
 out.close
