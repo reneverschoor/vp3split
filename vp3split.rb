@@ -1,63 +1,88 @@
 class Header
   @file = nil
 
+  attr_reader :data_size
+
   def initialize(file)
     @file = file
+    @data_size = 0
     read_data
   end
 
   def read_data
     magic_string = @file.read(6)
+    @data_size += 6
     abort('Invalid magic_string') unless magic_string == "%vsm%\x00"
 
     production_string_length = @file.read(2).unpack('n').first
+    @data_size += 2
     production_string = @file.read(production_string_length)
+    @data_size += production_string_length
   end
 end
 
 class EmbroiderySummary
   @file = nil
 
+  attr_reader :data_size
+  attr_reader :cursor_bytes_to_eof
+
   def initialize(file)
     @file = file
+    @data_size = 0
     read_data
   end
 
   def read_data
     tag = @file.read(3)
+    @data_size += 3
     abort('Invalid EmbroiderySummary tag') unless tag == "\x00\x02\x00"
 
     cursor_bytes_to_eof = @file.tell
     bytes_to_eof = @file.read(4).unpack('N').first   # needs to be modified
+    @data_size += 4
 
     settings_string_length = @file.read(2).unpack('n').first
+    @data_size += 2
     settings_string = @file.read(settings_string_length)
+    @data_size += settings_string_length
   end
 end
 
 class Extend
   @file = nil
 
+  attr_reader :data_size
+
   def initialize(file)
     @file = file
+    @data_size = 0
     read_data
   end
 
   def read_data
     extend_right = @file.read(4).unpack('N')
+    @data_size += 4
     extend_top = @file.read(4).unpack('N')
+    @data_size += 4
     extend_left = @file.read(4).unpack('N')
+    @data_size += 4
     extend_bottom = @file.read(4).unpack('N')
+    @data_size += 4
 
     stitch_time = @file.read(4).unpack('N')
+    @data_size += 4
 
     thread_change_count = @file.read(2).unpack('n').first
+    @data_size += 2
     puts "There are #{thread_change_count} colors in all designs"  # needs to be modified
 
     unknown_c = @file.read(1).unpack('h').first
+    @data_size += 1
     abort('Invalid unknown_c') unless unknown_c == 'c'
 
     design_block_count = @file.read(2).unpack('n').first
+    @data_size += 2
     puts "Designs in this file: #{design_block_count}"
     abort('I can only handle files with one design') unless design_block_count == 1
   end
@@ -66,51 +91,73 @@ end
 class DesignBlock
   @file = nil
 
+  attr_reader :data_size
   attr_reader :color_block_count
 
   def initialize(file)
     @file = file
+    @data_size = 0
     read_data
   end
 
   def read_data
     tag = @file.read(3)
+    @data_size += 3
     abort('Invalid DesignBlock tag') unless tag == "\x00\x03\x00"
 
     cursor_bytes_to_end_of_design = @file.tell
     bytes_to_end_of_design = @file.read(4).unpack('N').first  # needs to be modified
+    @data_size += 4
     #puts "Cursor = #{cursor_bytes_to_end_of_design}"
     #puts "Bytes to end of design = #{bytes_to_end_of_design}"
 
     design_center_x = @file.read(4).unpack('N')
+    @data_size += 4
     design_center_y = @file.read(4).unpack('N')
+    @data_size += 4
 
     unknown_000_1 = @file.read(3)
+    @data_size += 3
     abort('Invalid unknown_000_1 element') unless unknown_000_1 == "\x00\x00\x00"
 
     min_half_width = @file.read(4).unpack('N')
+    @data_size += 4
     plus_half_width = @file.read(4).unpack('N')
+    @data_size += 4
     min_half_heigth = @file.read(4).unpack('N')
+    @data_size += 4
     plus_half_heigth = @file.read(4).unpack('N')
+    @data_size += 4
     width = @file.read(4).unpack('N')
+    @data_size += 4
     height = @file.read(4).unpack('N')
+    @data_size += 4
 
     design_notes_string_length = @file.read(2).unpack('n').first
+    @data_size += 2
     design_notes_string = @file.read(design_notes_string_length)
+    @data_size += design_notes_string_length
 
     unknown_dd = @file.read(2)
+    @data_size += 2
     abort('Invalid unknown_dd element') unless unknown_dd == 'dd'
     unknown_101 = @file.read(16)
+    @data_size += 16
     abort('Invalid unknown_101 element') unless unknown_101 == "\x00\x00\x10\x00" + "\x00\x00\x00\x00" + "\x00\x00\x00\x00" + "\x00\x00\x10\x00"
     unknown_xxpp = @file.read(4)
+    @data_size += 4
     abort('Invalid unknown_xxpp element') unless unknown_xxpp == 'xxPP'
     unknown_10 = @file.read(2)
+    @data_size += 2
     abort('Invalid unknown_10 element') unless unknown_10 == "\x01\x00"
 
     production_string_length = @file.read(2).unpack('n').first
+    @data_size += 2
     production_string = @file.read(production_string_length)
+    @data_size += production_string_length
 
     @color_block_count = @file.read(2).unpack('n').first  # needs to be modified
+    @data_size += 2
     puts "This design has #{@color_block_count} colors"
   end
 end
@@ -119,9 +166,12 @@ class ColorBlocks
   @file = nil
   @color_block_count = 0
 
+  attr_reader :data_size
+
   def initialize(file, color_block_count)
     @file = file
     @color_block_count = color_block_count
+    @data_size = 0
     read_data
   end
 
@@ -136,11 +186,14 @@ class ColorBlocks
       puts "Color \##{color_nr + 1}"
 
       tag = @file.read(3)
+      @data_size += 3
       abort('Invalid ColorBlock tag') unless tag == "\x00\x05\x00"
 
       bytes_to_next_color_block = @file.read(4).unpack('N').first
+      @data_size += 4
       color_block[color_nr][:blocksize] = bytes_to_next_color_block + 7  # 7 = tag + bytes_to_next_color_block
       color_block_data = @file.read(bytes_to_next_color_block)
+      @data_size += bytes_to_next_color_block
 
       # cursor + tag(3) + blocksize(4) + blocksize = next cursor
 
