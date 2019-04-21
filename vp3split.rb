@@ -246,13 +246,44 @@ class ColorBlocks
   end
 end
 
-file = File.open('test.vp3', 'rb')
-header = Header.new(file)
-embroidery_summary = EmbroiderySummary.new(file)
-extend = Extend.new(file)
-design_block = DesignBlock.new(file)
-color_blocks = ColorBlocks.new(file, design_block.color_block_count)
+class VP3split
+  @filename_in
+  @filename_out
+  @file_in
+  @file_out
+  @header
+  @embroidery_summary
+  @extend
+  @design_block
+  @color_blocks
+
+  def initialize(filename_in, filename_out)
+    @filename_in = filename_in
+    @filename_out = filename_out
+  end
+
+  def slurp
+    @file_in = File.open(@filename_in, 'rb')
+    @header = Header.new(@file_in)
+    @embroidery_summary = EmbroiderySummary.new(@file_in)
+    @extend = Extend.new(@file_in)
+    @design_block = DesignBlock.new(@file_in)
+    @color_blocks = ColorBlocks.new(@file_in, @design_block.color_block_count)
+    @file_in.close
+  end
+
+  def dump
+    puts 'DUMP'
+  end
+
+end
+
+vp3_split = VP3split.new('test.vp3', 'out.vp3')
+vp3_split.slurp
+vp3_split.dump
+
 exit
+
 
 ###################################################################################################
 
