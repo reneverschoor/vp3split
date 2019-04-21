@@ -52,6 +52,8 @@ end
 class Extend
   @file = nil
 
+  attr_reader :cursor_thread_change_count
+  attr_reader :cursor_design_block_count
   attr_reader :data_size
 
   def initialize(file)
@@ -73,15 +75,17 @@ class Extend
     stitch_time = @file.read(4).unpack('N')
     @data_size += 4
 
-    thread_change_count = @file.read(2).unpack('n').first
+    cursor_thread_change_count = @file.tell
+    thread_change_count = @file.read(2).unpack('n').first  # needs to be modified
     @data_size += 2
-    puts "There are #{thread_change_count} colors in all designs"  # needs to be modified
+    puts "There are #{thread_change_count} colors in all designs"
 
     unknown_c = @file.read(1).unpack('h').first
     @data_size += 1
     abort('Invalid unknown_c') unless unknown_c == 'c'
 
-    design_block_count = @file.read(2).unpack('n').first
+    cursor_design_block_count = @file.tell
+    design_block_count = @file.read(2).unpack('n').first  # needs to be modified
     @data_size += 2
     puts "Designs in this file: #{design_block_count}"
     abort('I can only handle files with one design') unless design_block_count == 1
@@ -93,6 +97,8 @@ class DesignBlock
 
   attr_reader :data_size
   attr_reader :color_block_count
+  attr_reader :cursor_bytes_to_end_of_design
+  attr_reader :cursor_color_block_count
 
   def initialize(file)
     @file = file
@@ -156,6 +162,7 @@ class DesignBlock
     production_string = @file.read(production_string_length)
     @data_size += production_string_length
 
+    cursor_color_block_count = @file.tell
     @color_block_count = @file.read(2).unpack('n').first  # needs to be modified
     @data_size += 2
     puts "This design has #{@color_block_count} colors"
