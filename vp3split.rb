@@ -3,7 +3,7 @@
 module ReadDataBytes
   def read_data_bytes(nr)
     @data_size += nr
-    @file.read(nr)
+    return @file.read(nr)
   end
 end
 
@@ -269,8 +269,33 @@ class VP3split
   end
 
   def dump
-    puts 'DUMP'
-    puts @header.data_size
+    @file_out = File.open(@filename_out, 'wb')
+    write_header
+    write_embroidery_summary
+    write_extend
+    write_design_block
+    write_color_blocks
+    @file_out.close
+  end
+
+  def write_header
+    # TODO
+  end
+
+  def write_embroidery_summary
+    # TODO
+  end
+
+  def write_extend
+    # TODO
+  end
+
+  def write_design_block
+    # TODO
+  end
+
+  def write_color_blocks
+    # TODO
   end
 
 end
