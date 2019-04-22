@@ -9,7 +9,6 @@ end
 
 class Header
   include ReadDataBytes
-  @file = nil
 
   attr_reader :data_size
 
@@ -29,7 +28,6 @@ end
 
 class EmbroiderySummary
   include ReadDataBytes
-  @file = nil
 
   attr_reader :data_size
   attr_reader :cursor_bytes_to_eof
@@ -53,7 +51,6 @@ end
 
 class Extend
   include ReadDataBytes
-  @file = nil
 
   attr_reader :cursor_thread_change_count
   attr_reader :cursor_design_block_count
@@ -88,7 +85,6 @@ end
 
 class DesignBlock
   include ReadDataBytes
-  @file = nil
 
   attr_reader :data_size
   attr_reader :color_block_count
@@ -145,8 +141,6 @@ end
 
 class ColorBlocks
   include ReadDataBytes
-  @file = nil
-  @color_block_count = 0
 
   attr_reader :data_size
 
@@ -218,16 +212,6 @@ class ColorBlocks
 end
 
 class VP3split
-  @filename_in
-  @filename_out
-  @file_in
-  @file_out
-  @header
-  @embroidery_summary
-  @extend
-  @design_block
-  @color_blocks
-
   def initialize(filename_in, filename_out)
     @filename_in = filename_in
     @filename_out = filename_out
