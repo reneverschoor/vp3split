@@ -228,30 +228,17 @@ class ColorBlocks
   end
 end
 
-class VP3split
+class Slurp
   include Vp3BinaryFileData
 
-  def initialize(filename_in, filename_out)
-    @filename_in = filename_in
-    @filename_out = filename_out
-  end
+  attr_reader :header
+  attr_reader :embroidery_summary
+  attr_reader :extend
+  attr_reader :design_block
+  attr_reader :color_blocks
 
-  def open_files
-    @file_in = File.open(@filename_in, 'rb')
-    @file_out = File.open(@filename_out, 'wb')
-  end
-
-  def close_files
-    @file_in.close
-    @file_out.close
-  end
-
-  def slurp
-    read_header
-    read_embroidery_summary
-    read_extend
-    read_design_block
-    read_color_blocks
+  def initialize(file_in)
+    @file_in = file_in
   end
 
   def read_header
@@ -279,6 +266,35 @@ class VP3split
     @color_blocks.read_data
   end
 
+end
+
+class VP3split
+  include Vp3BinaryFileData
+
+  def initialize(filename_in, filename_out)
+    @filename_in = filename_in
+    @filename_out = filename_out
+  end
+
+  def open_files
+    @file_in = File.open(@filename_in, 'rb')
+    @file_out = File.open(@filename_out, 'wb')
+  end
+
+  def close_files
+    @file_in.close
+    @file_out.close
+  end
+
+  def slurp
+    @slurp = Slurp.new(@file_in)
+    @slurp.read_header
+    @slurp.read_embroidery_summary
+    @slurp.read_extend
+    @slurp.read_design_block
+    @slurp.read_color_blocks
+  end
+
   def dump
     write_header
     write_embroidery_summary
@@ -288,28 +304,28 @@ class VP3split
   end
 
   def write_header
-    carbon_copy(@header)
+    carbon_copy(@slurp.header)
   end
 
   def write_embroidery_summary
-    carbon_copy(@embroidery_summary)
+    carbon_copy(@slurp.embroidery_summary)
     # TODO New bytes_to_eof needs to be calculated and written
   end
 
   def write_extend
-    carbon_copy(@extend)
+    carbon_copy(@slurp.extend)
     # TODO New stitch_count needs to be calculated and written
     # TODO New thread_change_count needs to be written
   end
 
   def write_design_block
-    carbon_copy(@design_block)
+    carbon_copy(@slurp.design_block)
     # TODO New bytes_to_end_of_design needs to be calculated and written
     # TODO New color_block_count needs to be written
   end
 
   def write_color_blocks
-    carbon_copy(@color_blocks)
+    carbon_copy(@slurp.color_blocks)
     # TODO Only write some color_blocks
   end
 
