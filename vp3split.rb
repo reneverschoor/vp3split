@@ -6,7 +6,6 @@ class Header
   def initialize(file)
     @file = file
     @data_size = 0
-    read_data
   end
 
   def read_data
@@ -30,7 +29,6 @@ class EmbroiderySummary
   def initialize(file)
     @file = file
     @data_size = 0
-    read_data
   end
 
   def read_data
@@ -59,7 +57,6 @@ class Extend
   def initialize(file)
     @file = file
     @data_size = 0
-    read_data
   end
 
   def read_data
@@ -103,7 +100,6 @@ class DesignBlock
   def initialize(file)
     @file = file
     @data_size = 0
-    read_data
   end
 
   def read_data
@@ -179,7 +175,6 @@ class ColorBlocks
     @file = file
     @color_block_count = color_block_count
     @data_size = 0
-    read_data
   end
 
   def read_data
@@ -264,12 +259,37 @@ class VP3split
 
   def slurp
     @file_in = File.open(@filename_in, 'rb')
-    @header = Header.new(@file_in)
-    @embroidery_summary = EmbroiderySummary.new(@file_in)
-    @extend = Extend.new(@file_in)
-    @design_block = DesignBlock.new(@file_in)
-    @color_blocks = ColorBlocks.new(@file_in, @design_block.color_block_count)
+    read_header
+    read_embroidery_summary
+    read_extend
+    read_design_block
+    read_color_blocks
     @file_in.close
+  end
+
+  def read_header
+    @header = Header.new(@file_in)
+    @header.read_data
+  end
+
+  def read_embroidery_summary
+    @embroidery_summary = EmbroiderySummary.new(@file_in)
+    @embroidery_summary.read_data
+  end
+
+  def read_extend
+    @extend = Extend.new(@file_in)
+    @extend.read_data
+  end
+
+  def read_design_block
+    @design_block = DesignBlock.new(@file_in)
+    @design_block.read_data
+  end
+
+  def read_color_blocks
+    @color_blocks = ColorBlocks.new(@file_in, @design_block.color_block_count)
+    @color_blocks.read_data
   end
 
   def dump
