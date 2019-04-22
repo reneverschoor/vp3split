@@ -231,7 +231,7 @@ class ColorBlocks
       offset += 4
 
       stitch_data = color_block_data[offset, stitch_data_length]
-      analyze_stitches(stitch_data)
+      color_block[color_nr][:nr_stitches] = analyze_stitches(stitch_data.unpack("C*"))
     end
 
     @color_block_count.times do |color_nr|
@@ -240,7 +240,8 @@ class ColorBlocks
       print "#{color_block[color_nr][:weight]} - "
       print "#{color_block[color_nr][:catalog]} - "
       print "#{color_block[color_nr][:description]} - "
-      print "#{color_block[color_nr][:brand]}"
+      print "#{color_block[color_nr][:brand]} - "
+      print "#{color_block[color_nr][:nr_stitches]}"
       puts
     end
 
@@ -250,7 +251,54 @@ class ColorBlocks
     offset = 0
     stitch_start = stitch_data[offset, 3]
     offset += 3
-    abort('Invalid StitchStart') unless stitch_start.unpack("CCC") == [0x0a, 0xf6, 0x00]
+    abort('Invalid StitchStart') unless stitch_start == [0x0a, 0xf6, 0x00]
+
+    # stitch_data starts with 3 bytes StitchStart tag
+    # rest is stitches
+    total_bytes_to_read = stitch_data.length
+
+    nr_stitches = 0
+    read_stitches = true
+    long_form = false
+    while read_stitches
+      byte1 = stitch_data[offset, 1].first
+      if byte1 == 0x00 and nr_stitches > 0
+        # stitch_data ends with 1 or 2 0x00 bytes
+        #puts "The End"
+        #puts "offset = #{offset}  total_bytes_to_read = #{total_bytes_to_read}"
+        read_stitches = false
+      else
+        byte2 = stitch_data[offset + 1, 1].first
+        if byte1 == 0x80
+          # escape
+          if byte2 == 0x01
+            # enable long form
+            long_form = true
+            offset += 6  # skip 2 bytes escape (80 01) + 2 bytes dx + 2 bytes dy
+            nr_stitches += 1
+          elsif byte2 == 0x02
+            # disable long form
+            long_form = false
+            offset += 2
+          elsif byte2 == 0x03
+            # deleted/null/end stitch
+            offset += 2
+            #printf("%.2X %.2X\n", byte1, byte2)
+          end
+        else
+          # normal dx,xy
+          #printf("%.2X %.2X\n", byte1, byte2)
+          nr_stitches += 1
+          offset += 2  # 1 byte dx + 1 byte dy
+        end
+        if total_bytes_to_read - offset <= 2
+          read_stitches = false
+        end
+      end
+
+    end
+    #puts "Number of stitches = #{nr_stitches}"
+    return nr_stitches
   end
 
 end
