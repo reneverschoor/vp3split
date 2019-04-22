@@ -247,7 +247,11 @@ class ColorBlocks
     # rest is stitches
     total_bytes_to_read = stitch_data.length
 
-    nr_stitches = 0
+    nr_80_01 = 0
+    nr_80_02 = 0
+    nr_80_03 = 0
+
+    nr_stitches = 2  # Somehow start counter at 2?
     read_stitches = true
     long_form = false
     while read_stitches
@@ -258,14 +262,17 @@ class ColorBlocks
         if byte2 == 0x01
           # enable long form
           long_form = true
-          offset += 6  # skip 2 bytes escape (80 01) + 2 bytes dx + 2 bytes dy
           nr_stitches += 1
+          nr_80_01 += 1
+          offset += 6  # skip 2 bytes escape (80 01) + 2 bytes dx + 2 bytes dy
         elsif byte2 == 0x02
           # disable long form
           long_form = false
+          nr_80_02 += 1
           offset += 2
         elsif byte2 == 0x03
           # deleted/null/end stitch
+          nr_80_03 += 1
           offset += 2
           #printf("%.2X %.2X\n", byte1, byte2)
         end
@@ -281,6 +288,7 @@ class ColorBlocks
 
     end
     #puts "Number of stitches = #{nr_stitches}"
+    #puts "#{nr_80_01}-#{nr_80_02}-#{nr_80_03}"
     return nr_stitches
   end
 
