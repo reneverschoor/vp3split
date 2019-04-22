@@ -1,6 +1,14 @@
 #!/usr/bin/env ruby
 
+module ReadDataBytes
+  def read_data_bytes(nr)
+    @data_size += nr
+    @file.read(nr)
+  end
+end
+
 class Header
+  include ReadDataBytes
   @file = nil
 
   attr_reader :data_size
@@ -11,18 +19,16 @@ class Header
   end
 
   def read_data
-    magic_string = @file.read(6)
-    @data_size += 6
+    magic_string = read_data_bytes(6)
     abort('Invalid magic_string') unless magic_string == "%vsm%\x00"
 
-    production_string_length = @file.read(2).unpack('n').first
-    @data_size += 2
-    production_string = @file.read(production_string_length)
-    @data_size += production_string_length
+    production_string_length = read_data_bytes(2).unpack('n').first
+    production_string = read_data_bytes(production_string_length)
   end
 end
 
 class EmbroiderySummary
+  include ReadDataBytes
   @file = nil
 
   attr_reader :data_size
@@ -34,22 +40,19 @@ class EmbroiderySummary
   end
 
   def read_data
-    tag = @file.read(3)
-    @data_size += 3
+    tag = read_data_bytes(3)
     abort('Invalid EmbroiderySummary tag') unless tag == "\x00\x02\x00"
 
     cursor_bytes_to_eof = @file.tell
-    bytes_to_eof = @file.read(4).unpack('N').first   # needs to be modified
-    @data_size += 4
+    bytes_to_eof = read_data_bytes(4).unpack('N').first   # needs to be modified
 
-    settings_string_length = @file.read(2).unpack('n').first
-    @data_size += 2
-    settings_string = @file.read(settings_string_length)
-    @data_size += settings_string_length
+    settings_string_length = read_data_bytes(2).unpack('n').first
+    settings_string = read_data_bytes(settings_string_length)
   end
 end
 
 class Extend
+  include ReadDataBytes
   @file = nil
 
   attr_reader :cursor_thread_change_count
@@ -62,36 +65,29 @@ class Extend
   end
 
   def read_data
-    extend_right = @file.read(4).unpack('N')
-    @data_size += 4
-    extend_top = @file.read(4).unpack('N')
-    @data_size += 4
-    extend_left = @file.read(4).unpack('N')
-    @data_size += 4
-    extend_bottom = @file.read(4).unpack('N')
-    @data_size += 4
+    extend_right = read_data_bytes(4).unpack('N')
+    extend_top = read_data_bytes(4).unpack('N')
+    extend_left = read_data_bytes(4).unpack('N')
+    extend_bottom = read_data_bytes(4).unpack('N')
 
-    stitch_time = @file.read(4).unpack('N')
-    @data_size += 4
+    stitch_time = read_data_bytes(4).unpack('N')
 
     cursor_thread_change_count = @file.tell
-    thread_change_count = @file.read(2).unpack('n').first  # needs to be modified
-    @data_size += 2
+    thread_change_count = read_data_bytes(2).unpack('n').first  # needs to be modified
     puts "There are #{thread_change_count} colors in all designs"
 
-    unknown_c = @file.read(1).unpack('h').first
-    @data_size += 1
+    unknown_c = read_data_bytes(1).unpack('h').first
     abort('Invalid unknown_c') unless unknown_c == 'c'
 
     cursor_design_block_count = @file.tell
-    design_block_count = @file.read(2).unpack('n').first  # needs to be modified
-    @data_size += 2
+    design_block_count = read_data_bytes(2).unpack('n').first  # needs to be modified
     puts "Designs in this file: #{design_block_count}"
     abort('I can only handle files with one design') unless design_block_count == 1
   end
 end
 
 class DesignBlock
+  include ReadDataBytes
   @file = nil
 
   attr_reader :data_size
@@ -105,69 +101,50 @@ class DesignBlock
   end
 
   def read_data
-    tag = @file.read(3)
-    @data_size += 3
+    tag = read_data_bytes(3)
     abort('Invalid DesignBlock tag') unless tag == "\x00\x03\x00"
 
     cursor_bytes_to_end_of_design = @file.tell
-    bytes_to_end_of_design = @file.read(4).unpack('N').first  # needs to be modified
-    @data_size += 4
+    bytes_to_end_of_design = read_data_bytes(4).unpack('N').first  # needs to be modified
     #puts "Cursor = #{cursor_bytes_to_end_of_design}"
     #puts "Bytes to end of design = #{bytes_to_end_of_design}"
 
-    design_center_x = @file.read(4).unpack('N')
-    @data_size += 4
-    design_center_y = @file.read(4).unpack('N')
-    @data_size += 4
+    design_center_x = read_data_bytes(4).unpack('N')
+    design_center_y = read_data_bytes(4).unpack('N')
 
-    unknown_000_1 = @file.read(3)
-    @data_size += 3
+    unknown_000_1 = read_data_bytes(3)
     abort('Invalid unknown_000_1 element') unless unknown_000_1 == "\x00\x00\x00"
 
-    min_half_width = @file.read(4).unpack('N')
-    @data_size += 4
-    plus_half_width = @file.read(4).unpack('N')
-    @data_size += 4
-    min_half_heigth = @file.read(4).unpack('N')
-    @data_size += 4
-    plus_half_heigth = @file.read(4).unpack('N')
-    @data_size += 4
-    width = @file.read(4).unpack('N')
-    @data_size += 4
-    height = @file.read(4).unpack('N')
-    @data_size += 4
+    min_half_width = read_data_bytes(4).unpack('N')
+    plus_half_width = read_data_bytes(4).unpack('N')
+    min_half_heigth = read_data_bytes(4).unpack('N')
+    plus_half_heigth = read_data_bytes(4).unpack('N')
+    width = read_data_bytes(4).unpack('N')
+    height = read_data_bytes(4).unpack('N')
 
-    design_notes_string_length = @file.read(2).unpack('n').first
-    @data_size += 2
-    design_notes_string = @file.read(design_notes_string_length)
-    @data_size += design_notes_string_length
+    design_notes_string_length = read_data_bytes(2).unpack('n').first
+    design_notes_string = read_data_bytes(design_notes_string_length)
 
-    unknown_dd = @file.read(2)
-    @data_size += 2
+    unknown_dd = read_data_bytes(2)
     abort('Invalid unknown_dd element') unless unknown_dd == 'dd'
-    unknown_101 = @file.read(16)
-    @data_size += 16
+    unknown_101 = read_data_bytes(16)
     abort('Invalid unknown_101 element') unless unknown_101 == "\x00\x00\x10\x00" + "\x00\x00\x00\x00" + "\x00\x00\x00\x00" + "\x00\x00\x10\x00"
-    unknown_xxpp = @file.read(4)
-    @data_size += 4
+    unknown_xxpp = read_data_bytes(4)
     abort('Invalid unknown_xxpp element') unless unknown_xxpp == 'xxPP'
-    unknown_10 = @file.read(2)
-    @data_size += 2
+    unknown_10 = read_data_bytes(2)
     abort('Invalid unknown_10 element') unless unknown_10 == "\x01\x00"
 
-    production_string_length = @file.read(2).unpack('n').first
-    @data_size += 2
-    production_string = @file.read(production_string_length)
-    @data_size += production_string_length
+    production_string_length = read_data_bytes(2).unpack('n').first
+    production_string = read_data_bytes(production_string_length)
 
     cursor_color_block_count = @file.tell
-    @color_block_count = @file.read(2).unpack('n').first  # needs to be modified
-    @data_size += 2
+    @color_block_count = read_data_bytes(2).unpack('n').first  # needs to be modified
     puts "This design has #{@color_block_count} colors"
   end
 end
 
 class ColorBlocks
+  include ReadDataBytes
   @file = nil
   @color_block_count = 0
 
@@ -189,15 +166,12 @@ class ColorBlocks
       puts
       puts "Color \##{color_nr + 1}"
 
-      tag = @file.read(3)
-      @data_size += 3
+      tag = read_data_bytes(3)
       abort('Invalid ColorBlock tag') unless tag == "\x00\x05\x00"
 
-      bytes_to_next_color_block = @file.read(4).unpack('N').first
-      @data_size += 4
+      bytes_to_next_color_block = read_data_bytes(4).unpack('N').first
       color_block[color_nr][:blocksize] = bytes_to_next_color_block + 7  # 7 = tag + bytes_to_next_color_block
-      color_block_data = @file.read(bytes_to_next_color_block)
-      @data_size += bytes_to_next_color_block
+      color_block_data = read_data_bytes(bytes_to_next_color_block)
 
       # cursor + tag(3) + blocksize(4) + blocksize = next cursor
 
@@ -296,6 +270,7 @@ class VP3split
 
   def dump
     puts 'DUMP'
+    puts @header.data_size
   end
 
 end
