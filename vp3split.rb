@@ -65,8 +65,8 @@ class Extend
 
   attr_reader :cursor_start
   attr_reader :data_size
+  attr_reader :cursor_stitch_count
   attr_reader :cursor_thread_change_count
-  attr_reader :cursor_design_block_count
 
   def initialize(file)
     @file = file
@@ -80,7 +80,8 @@ class Extend
     extend_left = read_data_bytes(4).unpack('N')
     extend_bottom = read_data_bytes(4).unpack('N')
 
-    stitch_time = read_data_bytes(4).unpack('N')
+    cursor_stitch_count = @file.tell
+    stitch_count = read_data_bytes(4).unpack('N')  # needs to be modified
 
     cursor_thread_change_count = @file.tell
     thread_change_count = read_data_bytes(2).unpack('n').first  # needs to be modified
@@ -89,8 +90,7 @@ class Extend
     unknown_c = read_data_bytes(1).unpack('h').first
     abort('Invalid unknown_c') unless unknown_c == 'c'
 
-    cursor_design_block_count = @file.tell
-    design_block_count = read_data_bytes(2).unpack('n').first  # needs to be modified
+    design_block_count = read_data_bytes(2).unpack('n').first
     puts "Designs in this file: #{design_block_count}"
     abort('I can only handle files with one design') unless design_block_count == 1
   end
@@ -293,18 +293,24 @@ class VP3split
 
   def write_embroidery_summary
     carbon_copy(@embroidery_summary)
+    # TODO New bytes_to_eof needs to be calculated and written
   end
 
   def write_extend
     carbon_copy(@extend)
+    # TODO New stitch_count needs to be calculated and written
+    # TODO New thread_change_count needs to be written
   end
 
   def write_design_block
     carbon_copy(@design_block)
+    # TODO New bytes_to_end_of_design needs to be calculated and written
+    # TODO New color_block_count needs to be written
   end
 
   def write_color_blocks
     carbon_copy(@color_blocks)
+    # TODO Only write some color_blocks
   end
 
 end
