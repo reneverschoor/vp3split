@@ -12,5 +12,4 @@ To analyze the VP3 file format I mixed info from these sources:
 and used the Hexinator (https://hexinator.com) tool.
 The crappy grammar file I produced is in the `hexinator` subdir.
 
-This utility is written in an utter non-Ruby style.
  
