@@ -1,14 +1,21 @@
 #!/usr/bin/env ruby
 
-module ReadDataBytes
+module Vp3BinaryFileData
+
   def read_data_bytes(nr)
     @data_size += nr
     return @file.read(nr)
   end
+
+  def carbon_copy(block)
+    @file_in.pos = block.cursor_start
+    @file_out.write(@file_in.read(block.data_size))
+  end
+
 end
 
 class Header
-  include ReadDataBytes
+  include Vp3BinaryFileData
 
   attr_reader :cursor_start
   attr_reader :data_size
@@ -29,7 +36,7 @@ class Header
 end
 
 class EmbroiderySummary
-  include ReadDataBytes
+  include Vp3BinaryFileData
 
   attr_reader :cursor_start
   attr_reader :data_size
@@ -54,7 +61,7 @@ class EmbroiderySummary
 end
 
 class Extend
-  include ReadDataBytes
+  include Vp3BinaryFileData
 
   attr_reader :cursor_start
   attr_reader :data_size
@@ -90,7 +97,7 @@ class Extend
 end
 
 class DesignBlock
-  include ReadDataBytes
+  include Vp3BinaryFileData
 
   attr_reader :cursor_start
   attr_reader :data_size
@@ -148,7 +155,7 @@ class DesignBlock
 end
 
 class ColorBlocks
-  include ReadDataBytes
+  include Vp3BinaryFileData
 
   attr_reader :cursor_start
   attr_reader :data_size
@@ -222,19 +229,29 @@ class ColorBlocks
 end
 
 class VP3split
+  include Vp3BinaryFileData
+
   def initialize(filename_in, filename_out)
     @filename_in = filename_in
     @filename_out = filename_out
   end
 
-  def slurp
+  def open_files
     @file_in = File.open(@filename_in, 'rb')
+    @file_out = File.open(@filename_out, 'wb')
+  end
+
+  def close_files
+    @file_in.close
+    @file_out.close
+  end
+
+  def slurp
     read_header
     read_embroidery_summary
     read_extend
     read_design_block
     read_color_blocks
-    @file_in.close
   end
 
   def read_header
@@ -263,17 +280,15 @@ class VP3split
   end
 
   def dump
-    @file_out = File.open(@filename_out, 'wb')
     write_header
     write_embroidery_summary
     write_extend
     write_design_block
     write_color_blocks
-    @file_out.close
   end
 
   def write_header
-    # TODO
+    carbon_copy(@header)
   end
 
   def write_embroidery_summary
@@ -295,8 +310,10 @@ class VP3split
 end
 
 vp3_split = VP3split.new('test.vp3', 'out.vp3')
+vp3_split.open_files
 vp3_split.slurp
 vp3_split.dump
+vp3_split.close_files
 
 exit
 
