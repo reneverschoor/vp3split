@@ -169,17 +169,17 @@ class ColorBlocks
   end
 
   def read_data
-    color_block = []
+    @color_blocks = []
     @color_block_count.times do |color_nr|
 
       cursor_color_block = @file.tell
-      color_block[color_nr] = {:cursor => cursor_color_block}
+      @color_blocks[color_nr] = {:cursor => cursor_color_block}
 
       tag = read_data_bytes(3)
       abort('Invalid ColorBlock tag') unless tag == "\x00\x05\x00"
 
       bytes_to_next_color_block = read_data_bytes(4).unpack('N').first
-      color_block[color_nr][:blocksize] = bytes_to_next_color_block + 7  # 7 = tag + bytes_to_next_color_block
+      @color_blocks[color_nr][:blocksize] = bytes_to_next_color_block + 7  # 7 = tag + bytes_to_next_color_block
       color_block_data = read_data_bytes(bytes_to_next_color_block)
 
       # cursor + tag(3) + blocksize(4) + blocksize = next cursor
@@ -189,33 +189,33 @@ class ColorBlocks
 
       case material = color_block_data[16].unpack('C').first
       when 3
-        color_block[color_nr][:material] = 'Metallic'
+        @color_blocks[color_nr][:material] = 'Metallic'
       when 4
-        color_block[color_nr][:material] = 'Cotton'
+        @color_blocks[color_nr][:material] = 'Cotton'
       when 5
-        color_block[color_nr][:material] = 'Rayon'
+        @color_blocks[color_nr][:material] = 'Rayon'
       when 6
-        color_block[color_nr][:material] = 'Polyester'
+        @color_blocks[color_nr][:material] = 'Polyester'
       when 10
-        color_block[color_nr][:material] = 'Silk'
+        @color_blocks[color_nr][:material] = 'Silk'
       else
-        color_block[color_nr][:material] = 'Unknown material'
+        @color_blocks[color_nr][:material] = 'Unknown material'
       end
 
-      color_block[color_nr][:weight] = color_block_data[17].unpack('C').first
+      @color_blocks[color_nr][:weight] = color_block_data[17].unpack('C').first
 
       catalog_length = color_block_data[18..19].unpack('n').first
-      color_block[color_nr][:catalog] = color_block_data[20, catalog_length]
+      @color_blocks[color_nr][:catalog] = color_block_data[20, catalog_length]
 
       offset = 20 + catalog_length
       description_length = color_block_data[offset, 2].unpack('n').first
       offset += 2
-      color_block[color_nr][:description] = color_block_data[offset, description_length]
+      @color_blocks[color_nr][:description] = color_block_data[offset, description_length]
 
       offset += description_length
       brand_length = color_block_data[offset, 2].unpack('n').first
       offset += 2
-      color_block[color_nr][:brand] = color_block_data[offset, brand_length]
+      @color_blocks[color_nr][:brand] = color_block_data[offset, brand_length]
       offset += brand_length
 
       displacement_x = color_block_data[offset, 4].unpack('N')
@@ -231,17 +231,17 @@ class ColorBlocks
       offset += 4
 
       stitch_data = color_block_data[offset, stitch_data_length]
-      color_block[color_nr][:nr_stitches] = analyze_stitches(stitch_data.unpack("C*"))
+      @color_blocks[color_nr][:nr_stitches] = analyze_stitches(stitch_data.unpack("C*"))
     end
 
     @color_block_count.times do |color_nr|
       print "#{color_nr} - "
-      print "#{color_block[color_nr][:material]} - "
-      print "#{color_block[color_nr][:weight]} - "
-      print "#{color_block[color_nr][:catalog]} - "
-      print "#{color_block[color_nr][:description]} - "
-      print "#{color_block[color_nr][:brand]} - "
-      print "#{color_block[color_nr][:nr_stitches]}"
+      print "#{@color_blocks[color_nr][:material]} - "
+      print "#{@color_blocks[color_nr][:weight]} - "
+      print "#{@color_blocks[color_nr][:catalog]} - "
+      print "#{@color_blocks[color_nr][:description]} - "
+      print "#{@color_blocks[color_nr][:brand]} - "
+      print "#{@color_blocks[color_nr][:nr_stitches]}"
       puts
     end
 
