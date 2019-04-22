@@ -252,38 +252,31 @@ class ColorBlocks
     long_form = false
     while read_stitches
       byte1 = stitch_data[offset, 1].first
-      if byte1 == 0x00 and nr_stitches > 0
-        # stitch_data ends with 1 or 2 0x00 bytes
-        #puts "The End"
-        #puts "offset = #{offset}  total_bytes_to_read = #{total_bytes_to_read}"
-        read_stitches = false
-      else
-        byte2 = stitch_data[offset + 1, 1].first
-        if byte1 == 0x80
-          # escape
-          if byte2 == 0x01
-            # enable long form
-            long_form = true
-            offset += 6  # skip 2 bytes escape (80 01) + 2 bytes dx + 2 bytes dy
-            nr_stitches += 1
-          elsif byte2 == 0x02
-            # disable long form
-            long_form = false
-            offset += 2
-          elsif byte2 == 0x03
-            # deleted/null/end stitch
-            offset += 2
-            #printf("%.2X %.2X\n", byte1, byte2)
-          end
-        else
-          # normal dx,xy
-          #printf("%.2X %.2X\n", byte1, byte2)
+      byte2 = stitch_data[offset + 1, 1].first
+      if byte1 == 0x80
+        # escape
+        if byte2 == 0x01
+          # enable long form
+          long_form = true
+          offset += 6  # skip 2 bytes escape (80 01) + 2 bytes dx + 2 bytes dy
           nr_stitches += 1
-          offset += 2  # 1 byte dx + 1 byte dy
+        elsif byte2 == 0x02
+          # disable long form
+          long_form = false
+          offset += 2
+        elsif byte2 == 0x03
+          # deleted/null/end stitch
+          offset += 2
+          #printf("%.2X %.2X\n", byte1, byte2)
         end
-        if total_bytes_to_read - offset <= 2
-          read_stitches = false
-        end
+      else
+        # normal dx,xy
+        #printf("%.2X %.2X\n", byte1, byte2)
+        nr_stitches += 1
+        offset += 2  # 1 byte dx + 1 byte dy
+      end
+      if total_bytes_to_read - offset <= 2
+        read_stitches = false
       end
 
     end
