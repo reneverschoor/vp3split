@@ -216,6 +216,21 @@ class ColorBlocks
       brand_length = color_block_data[offset, 2].unpack('n').first
       offset += 2
       color_block[color_nr][:brand] = color_block_data[offset, brand_length]
+      offset += brand_length
+
+      displacement_x = color_block_data[offset, 4].unpack('N')
+      offset += 4
+      displacement_y = color_block_data[offset, 4].unpack('N')
+      offset += 4
+
+      stitch_data_tag = color_block_data[offset, 3]
+      offset += 3
+      abort('Invalid StitchData tag') unless stitch_data_tag == "\x00\x01\x00"
+
+      stitch_data_length = color_block_data[offset, 4].unpack('N').first
+      offset += 4
+
+      stitch_data = color_block_data[offset, stitch_data_length]
     end
 
     @color_block_count.times do |color_nr|
