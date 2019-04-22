@@ -292,19 +292,19 @@ class VP3split
   end
 
   def write_embroidery_summary
-    # TODO
+    carbon_copy(@embroidery_summary)
   end
 
   def write_extend
-    # TODO
+    carbon_copy(@extend)
   end
 
   def write_design_block
-    # TODO
+    carbon_copy(@design_block)
   end
 
   def write_color_blocks
-    # TODO
+    carbon_copy(@color_blocks)
   end
 
 end
