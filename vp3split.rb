@@ -81,17 +81,18 @@ class Extend
     extend_bottom = read_data_bytes(4).unpack('N')
 
     cursor_stitch_count = @file.tell
-    stitch_count = read_data_bytes(4).unpack('N')  # needs to be modified
+    stitch_count = read_data_bytes(4).unpack('N').first  # needs to be modified
+    puts "There are #{stitch_count} stitches in total"
 
     cursor_thread_change_count = @file.tell
     thread_change_count = read_data_bytes(2).unpack('n').first  # needs to be modified
-    puts "There are #{thread_change_count} colors in all designs"
+    puts "There are #{thread_change_count} colors in total"
 
     unknown_c = read_data_bytes(1).unpack('h').first
     abort('Invalid unknown_c') unless unknown_c == 'c'
 
     design_block_count = read_data_bytes(2).unpack('n').first
-    puts "Designs in this file: #{design_block_count}"
+    #puts "Designs in this file: #{design_block_count}"
     abort('I can only handle files with one design') unless design_block_count == 1
   end
 end
