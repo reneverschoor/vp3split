@@ -175,9 +175,6 @@ class ColorBlocks
       cursor_color_block = @file.tell
       color_block[color_nr] = {:cursor => cursor_color_block}
 
-      puts
-      puts "Color \##{color_nr + 1}"
-
       tag = read_data_bytes(3)
       abort('Invalid ColorBlock tag') unless tag == "\x00\x05\x00"
 
@@ -190,43 +187,50 @@ class ColorBlocks
       color_entries = color_block_data[8].unpack('C').first
       abort("Thread colors is #{color_entries} instead of 1") unless color_entries == 1
 
-      print 'Material: '
       case material = color_block_data[16].unpack('C').first
       when 3
-        puts 'Metallic'
+        color_block[color_nr][:material] = 'Metallic'
       when 4
-        puts 'Cotton'
+        color_block[color_nr][:material] = 'Cotton'
       when 5
-        puts 'Rayon'
+        color_block[color_nr][:material] = 'Rayon'
       when 6
-        puts 'Polyester'
+        color_block[color_nr][:material] = 'Polyester'
       when 10
-        puts 'Silk'
+        color_block[color_nr][:material] = 'Silk'
       else
-        puts 'Unknown material'
+        color_block[color_nr][:material] = 'Unknown material'
       end
 
-      weight = color_block_data[17].unpack('C').first
-      puts "Weight: #{weight}"
+      color_block[color_nr][:weight] = color_block_data[17].unpack('C').first
 
       catalog_length = color_block_data[18..19].unpack('n').first
-      catalog = color_block_data[20, catalog_length]
-      puts "Catalog: #{catalog}"
+      color_block[color_nr][:catalog] = color_block_data[20, catalog_length]
 
       offset = 20 + catalog_length
       description_length = color_block_data[offset, 2].unpack('n').first
       offset += 2
-      description = color_block_data[offset, description_length]
-      puts "Description: #{description}"
+      color_block[color_nr][:description] = color_block_data[offset, description_length]
 
       offset += description_length
       brand_length = color_block_data[offset, 2].unpack('n').first
       offset += 2
-      brand = color_block_data[offset, brand_length]
-      puts "Brand: #{brand}"
+      color_block[color_nr][:brand] = color_block_data[offset, brand_length]
     end
-    #p color_block
+
+    @color_block_count.times do |color_nr|
+      print "#{color_nr} - "
+      print "#{color_block[color_nr][:material]} - "
+      print "#{color_block[color_nr][:weight]} - "
+      print "#{color_block[color_nr][:catalog]} - "
+      print "#{color_block[color_nr][:description]} - "
+      print "#{color_block[color_nr][:brand]} - "
+      puts
+    end
+
   end
+
+
 end
 
 class Slurp
