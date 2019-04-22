@@ -234,17 +234,7 @@ class ColorBlocks
       @color_blocks[color_nr][:nr_stitches] = analyze_stitches(stitch_data.unpack("C*"))
     end
 
-    @color_block_count.times do |color_nr|
-      print "#{color_nr} - "
-      print "#{@color_blocks[color_nr][:material]} - "
-      print "#{@color_blocks[color_nr][:weight]} - "
-      print "#{@color_blocks[color_nr][:catalog]} - "
-      print "#{@color_blocks[color_nr][:description]} - "
-      print "#{@color_blocks[color_nr][:brand]} - "
-      print "#{@color_blocks[color_nr][:nr_stitches]}"
-      puts
-    end
-
+    return @color_blocks
   end
 
   def analyze_stitches stitch_data
@@ -338,7 +328,20 @@ class Slurp
 
   def read_color_blocks
     @color_blocks = ColorBlocks.new(@file_in, @design_block.color_block_count)
-    @color_blocks.read_data
+    color_blocks = @color_blocks.read_data
+    total_stitches = 0
+    color_blocks.each_with_index do |color, i|
+      print "Color \##{i + 1} - "
+      print "#{color[:material]} - "
+      print "#{color[:weight]} - "
+      print "#{color[:catalog]} - "
+      print "#{color[:description]} - "
+      print "#{color[:brand]} - "
+      puts "#{color[:nr_stitches]} stitches"
+      total_stitches += color[:nr_stitches]
+    end
+    puts "Total stitches analyzed = #{total_stitches}"
+
   end
 
 end
