@@ -10,11 +10,13 @@ end
 class Header
   include ReadDataBytes
 
+  attr_reader :cursor_start
   attr_reader :data_size
 
   def initialize(file)
     @file = file
     @data_size = 0
+    @cursor_start = @file.tell
   end
 
   def read_data
@@ -29,12 +31,14 @@ end
 class EmbroiderySummary
   include ReadDataBytes
 
+  attr_reader :cursor_start
   attr_reader :data_size
   attr_reader :cursor_bytes_to_eof
 
   def initialize(file)
     @file = file
     @data_size = 0
+    @cursor_start = @file.tell
   end
 
   def read_data
@@ -52,13 +56,15 @@ end
 class Extend
   include ReadDataBytes
 
+  attr_reader :cursor_start
+  attr_reader :data_size
   attr_reader :cursor_thread_change_count
   attr_reader :cursor_design_block_count
-  attr_reader :data_size
 
   def initialize(file)
     @file = file
     @data_size = 0
+    @cursor_start = @file.tell
   end
 
   def read_data
@@ -86,6 +92,7 @@ end
 class DesignBlock
   include ReadDataBytes
 
+  attr_reader :cursor_start
   attr_reader :data_size
   attr_reader :color_block_count
   attr_reader :cursor_bytes_to_end_of_design
@@ -94,6 +101,7 @@ class DesignBlock
   def initialize(file)
     @file = file
     @data_size = 0
+    @cursor_start = @file.tell
   end
 
   def read_data
@@ -142,12 +150,14 @@ end
 class ColorBlocks
   include ReadDataBytes
 
+  attr_reader :cursor_start
   attr_reader :data_size
 
   def initialize(file, color_block_count)
     @file = file
     @color_block_count = color_block_count
     @data_size = 0
+    @cursor_start = @file.tell
   end
 
   def read_data
