@@ -231,6 +231,7 @@ class ColorBlocks
       offset += 4
 
       stitch_data = color_block_data[offset, stitch_data_length]
+      analyze_stitches(stitch_data)
     end
 
     @color_block_count.times do |color_nr|
@@ -239,12 +240,18 @@ class ColorBlocks
       print "#{color_block[color_nr][:weight]} - "
       print "#{color_block[color_nr][:catalog]} - "
       print "#{color_block[color_nr][:description]} - "
-      print "#{color_block[color_nr][:brand]} - "
+      print "#{color_block[color_nr][:brand]}"
       puts
     end
 
   end
 
+  def analyze_stitches stitch_data
+    offset = 0
+    stitch_start = stitch_data[offset, 3]
+    offset += 3
+    abort('Invalid StitchStart') unless stitch_start.unpack("CCC") == [0x0a, 0xf6, 0x00]
+  end
 
 end
 
