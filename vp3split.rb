@@ -268,6 +268,45 @@ class Slurp
 
 end
 
+class Dump
+  include Vp3BinaryFileData
+
+  attr_reader :slurp
+
+  def initialize(file_in, file_out, slurp)
+    @file_in = file_in
+    @file_out = file_out
+    @slurp = slurp
+  end
+
+  def write_header
+    carbon_copy(@slurp.header)
+  end
+
+  def write_embroidery_summary
+    carbon_copy(@slurp.embroidery_summary)
+    # TODO New bytes_to_eof needs to be calculated and written
+  end
+
+  def write_extend
+    carbon_copy(@slurp.extend)
+    # TODO New stitch_count needs to be calculated and written
+    # TODO New thread_change_count needs to be written
+  end
+
+  def write_design_block
+    carbon_copy(@slurp.design_block)
+    # TODO New bytes_to_end_of_design needs to be calculated and written
+    # TODO New color_block_count needs to be written
+  end
+
+  def write_color_blocks
+    carbon_copy(@slurp.color_blocks)
+    # TODO Only write some color_blocks
+  end
+
+end
+
 class VP3split
   include Vp3BinaryFileData
 
@@ -296,37 +335,12 @@ class VP3split
   end
 
   def dump
-    write_header
-    write_embroidery_summary
-    write_extend
-    write_design_block
-    write_color_blocks
-  end
-
-  def write_header
-    carbon_copy(@slurp.header)
-  end
-
-  def write_embroidery_summary
-    carbon_copy(@slurp.embroidery_summary)
-    # TODO New bytes_to_eof needs to be calculated and written
-  end
-
-  def write_extend
-    carbon_copy(@slurp.extend)
-    # TODO New stitch_count needs to be calculated and written
-    # TODO New thread_change_count needs to be written
-  end
-
-  def write_design_block
-    carbon_copy(@slurp.design_block)
-    # TODO New bytes_to_end_of_design needs to be calculated and written
-    # TODO New color_block_count needs to be written
-  end
-
-  def write_color_blocks
-    carbon_copy(@slurp.color_blocks)
-    # TODO Only write some color_blocks
+    @dump = Dump.new(@file_in, @file_out, @slurp)
+    @dump.write_header
+    @dump.write_embroidery_summary
+    @dump.write_extend
+    @dump.write_design_block
+    @dump.write_color_blocks
   end
 
 end
