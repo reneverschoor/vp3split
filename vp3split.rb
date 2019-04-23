@@ -229,6 +229,7 @@ class ColorBlocks
 
       stitch_data_length = color_block_data[offset, 4].unpack('N').first
       offset += 4
+      @color_blocks[color_nr][:stitch_data_length] = stitch_data_length - 3  # exclude StitchStart tag
 
       stitch_data = color_block_data[offset, stitch_data_length]
       @color_blocks[color_nr][:nr_stitches] = analyze_stitches(stitch_data.unpack("C*"))
@@ -338,6 +339,7 @@ class Slurp
       print "#{color[:catalog]} - "
       print "#{color[:description]} - "
       print "#{color[:brand]} - "
+      print "~#{color[:stitch_data_length] / 2} - "
       puts "#{color[:nr_stitches]} stitches"
       total_stitches += color[:nr_stitches]
     end
