@@ -7,9 +7,9 @@ module Vp3BinaryFileData
     return @file.read(nr)
   end
 
-  def carbon_copy(block)
-    @file_in.pos = block.cursor_start
-    @file_out.write(@file_in.read(block.data_size))
+  def carbon_copy(cursor, size)
+    @file_in.pos = cursor
+    @file_out.write(@file_in.read(size))
   end
 
 end
@@ -52,7 +52,7 @@ class EmbroiderySummary
     tag = read_data_bytes(3)
     abort('Invalid EmbroiderySummary tag') unless tag == "\x00\x02\x00"
 
-    cursor_bytes_to_eof = @file.tell
+    @cursor_bytes_to_eof = @file.tell
     bytes_to_eof = read_data_bytes(4).unpack('N').first   # needs to be modified
 
     settings_string_length = read_data_bytes(2).unpack('n').first
@@ -80,11 +80,11 @@ class Extend
     extend_left = read_data_bytes(4).unpack('N')
     extend_bottom = read_data_bytes(4).unpack('N')
 
-    cursor_stitch_count = @file.tell
+    @cursor_stitch_count = @file.tell
     stitch_count = read_data_bytes(4).unpack('N').first  # needs to be modified
     puts "There are #{stitch_count} stitches in total"
 
-    cursor_thread_change_count = @file.tell
+    @cursor_thread_change_count = @file.tell
     thread_change_count = read_data_bytes(2).unpack('n').first  # needs to be modified
     puts "There are #{thread_change_count} colors in total"
 
@@ -116,7 +116,7 @@ class DesignBlock
     tag = read_data_bytes(3)
     abort('Invalid DesignBlock tag') unless tag == "\x00\x03\x00"
 
-    cursor_bytes_to_end_of_design = @file.tell
+    @cursor_bytes_to_end_of_design = @file.tell
     bytes_to_end_of_design = read_data_bytes(4).unpack('N').first  # needs to be modified
     #puts "Cursor = #{cursor_bytes_to_end_of_design}"
     #puts "Bytes to end of design = #{bytes_to_end_of_design}"
@@ -149,7 +149,7 @@ class DesignBlock
     production_string_length = read_data_bytes(2).unpack('n').first
     production_string = read_data_bytes(production_string_length)
 
-    cursor_color_block_count = @file.tell
+    @cursor_color_block_count = @file.tell
     @color_block_count = read_data_bytes(2).unpack('n').first  # needs to be modified
     puts "This design has #{@color_block_count} colors"
   end
@@ -363,67 +363,73 @@ class Dump
   end
 
   def calculate
-    # TODO
-    puts
-    # puts "colorblocks to dump = #{@colorblocks_to_dump}"
+    @extend_stitch_count = 0
+    @extend_thread_change_count = 0
+    @designblock_color_count = 0
 
-    extend_stitch_count = 0
-    extend_thread_change_count = 0
-    designblock_color_count = 0
+    @embroiderysummary_bytes_to_eof = 0
+    @embroiderysummary_bytes_to_eof += @slurp.extend.data_size
+    @embroiderysummary_bytes_to_eof += @slurp.design_block.data_size
+    @embroiderysummary_bytes_to_eof += 2
 
-    embroiderysummary_bytes_to_eof = 0
-    embroiderysummary_bytes_to_eof += @slurp.extend.data_size
-    embroiderysummary_bytes_to_eof += @slurp.design_block.data_size
-    embroiderysummary_bytes_to_eof += 2
-
-    designblock_bytes_to_end_of_design = 0
-    designblock_bytes_to_end_of_design += @slurp.design_block.data_size
-    designblock_bytes_to_end_of_design -= 7
-
+    @designblock_bytes_to_end_of_design = 0
+    @designblock_bytes_to_end_of_design += @slurp.design_block.data_size
+    @designblock_bytes_to_end_of_design -= 7
 
     @slurp.color_blocks.each_with_index do |color, nr|
       if @colorblocks_to_dump.include?(nr)
-        # p color
-        embroiderysummary_bytes_to_eof += color[:blocksize]
-        designblock_bytes_to_end_of_design += color[:blocksize]
-        extend_stitch_count += color[:nr_stitches]
-        extend_thread_change_count += 1
-        designblock_color_count +=1
+        @embroiderysummary_bytes_to_eof += color[:blocksize]
+        @designblock_bytes_to_end_of_design += color[:blocksize]
+        @extend_stitch_count += color[:nr_stitches]
+        @extend_thread_change_count += 1
+        @designblock_color_count +=1
       end
     end
 
-    puts "Calculated:"
-    puts "EmbroiderySummary bytes_to_eof = #{embroiderysummary_bytes_to_eof}"
-    puts "Extend stitch_count = #{extend_stitch_count}"
-    puts "Extend thread_change_count = #{extend_thread_change_count}"
-    puts "DesignBlock bytes_to_end_of_design = #{designblock_bytes_to_end_of_design}"
-    puts "DesignBlock color_count = #{designblock_color_count}"
+    puts
+    puts "Calculated for colors #{@colorblocks_to_dump}:"
+    puts "EmbroiderySummary bytes_to_eof = #{@embroiderysummary_bytes_to_eof}"
+    puts "Extend stitch_count = #{@extend_stitch_count}"
+    puts "Extend thread_change_count = #{@extend_thread_change_count}"
+    puts "DesignBlock bytes_to_end_of_design = #{@designblock_bytes_to_end_of_design}"
+    puts "DesignBlock color_count = #{@designblock_color_count}"
+  end
+
+  def modify position, value, format
+    puts "Modify at #{position} = #{value}"
+    eof_pos = @file_out.tell
+    @file_out.pos = position
+    @file_out.write([value].pack(format))
+    @file_out.pos = eof_pos
   end
 
   def write_header
-    carbon_copy(@slurp.header)
+    carbon_copy(@slurp.header.cursor_start, @slurp.header.data_size)
   end
 
   def write_embroidery_summary
-    carbon_copy(@slurp.embroidery_summary)
-    # TODO New bytes_to_eof needs to be calculated and written
+    carbon_copy(@slurp.embroidery_summary.cursor_start, @slurp.embroidery_summary.data_size)
+    modify @slurp.embroidery_summary.cursor_bytes_to_eof, @embroiderysummary_bytes_to_eof, "N"
   end
 
   def write_extend
-    carbon_copy(@slurp.extend)
-    # TODO New stitch_count needs to be calculated and written
-    # TODO New thread_change_count needs to be written
+    carbon_copy(@slurp.extend.cursor_start, @slurp.extend.data_size)
+    modify @slurp.extend.cursor_stitch_count, @extend_stitch_count, "N"
+    modify @slurp.extend.cursor_thread_change_count, @extend_thread_change_count, "n"
   end
 
   def write_design_block
-    carbon_copy(@slurp.design_block)
-    # TODO New bytes_to_end_of_design needs to be calculated and written
-    # TODO New color_block_count needs to be written
+    carbon_copy(@slurp.design_block.cursor_start, @slurp.design_block.data_size)
+    modify @slurp.design_block.cursor_bytes_to_end_of_design, @designblock_bytes_to_end_of_design, "N"
+    modify @slurp.design_block.cursor_color_block_count, @designblock_color_count, "n"
   end
 
   def write_color_blocks
-    #carbon_copy(@slurp.color_blocks)
-    # TODO Only write some color_blocks
+    @slurp.color_blocks.each_with_index do |color, nr|
+      if @colorblocks_to_dump.include?(nr)
+        carbon_copy(color[:cursor], color[:blocksize])
+      end
+    end
   end
 
 end
@@ -467,79 +473,5 @@ end
 vp3_split = VP3split.new('test.vp3', 'out.vp3')
 vp3_split.slurp
 vp3_split.dump((0..20).to_a, '-aap')
-vp3_split.dump((21..30).to_a,  '-noot')
+#vp3_split.dump((21..30).to_a,  '-noot')
 vp3_split.deinit
-exit
-
-
-###################################################################################################
-
-######
-# cursor_bytes_to_end_of_design
-#  4 (bytes_to_end_of_design)
-#
-#  8 (design_center_x/y)
-#  3 (unknown)
-# 24 (width/height)
-#  2 (design_notes_string_length)
-# design_notes_string_length
-# 24 (unknown)
-#  2 (production_string_length)
-# production_string_length
-#  2 (color_block_count)
-# =========
-# 65 + design_notes_string_length + production_string_length
-#puts "Expected cursor 1st colorblock = #{cursor_bytes_to_end_of_design + 65 + design_notes_string_length + production_string_length}"
-
-#puts "bytes_to_end_of_design = #{bytes_to_end_of_design}"
-total = 65 + design_notes_string_length + production_string_length
-color_block.each do |color|
-  total += color[:blocksize]
-end
-#puts "total = #{total}"
-abort('Size mismatch') unless total == bytes_to_end_of_design
-
-file.rewind
-out = File.open('out.vp3', 'wb')
-
-# test: write colorblock #1
-
-# read/write cursor_bytes_to_end_of_design bytes
-preamble = file.read(cursor_bytes_to_end_of_design)
-out.write(preamble)
-# calculate new bytes_to_end_of_design bytes
-# = 65 + design_notes_string_length + production_string_length + color_block[x][:blocksize]
-p total = 65 + design_notes_string_length + production_string_length
-p color_block
-p total += color_block[0][:blocksize]
-out.write([total].pack('N'))
-
-old_bytes_to_end = file.read(4)  # skip reading old value
-design_block = file.read(63 + design_notes_string_length + production_string_length) # don't read last 2 bytes = #colors
-out.write(design_block)
-
-new_nr_colors = 1
-out.write([new_nr_colors].pack('n'))
-
-# Move to colorblock
-cursor = color_block[0][:cursor]
-blocksize = color_block[0][:blocksize]
-file.pos = cursor
-colorblock = file.read(blocksize)
-out.write(colorblock)
-
-# Update bytes_to_eof
-new_bytes_to_eof = file.stat.size        # total file size
-new_bytes_to_eof -= cursor_bytes_to_eof  # substract bytes before this field
-new_bytes_to_eof -= 4                    # substract length of this field itself
-# Substract all color blocks
-color_block.each do |color|
-  new_bytes_to_eof -= color[:blocksize]
-end
-# Add size of colorblocks
-new_bytes_to_eof += color_block[0][:blocksize]
-out.pos = cursor_bytes_to_eof
-out.write([new_bytes_to_eof].pack('N'))
-
-file.close
-out.close
