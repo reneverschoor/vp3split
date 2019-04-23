@@ -377,7 +377,7 @@ class Dump
     @designblock_bytes_to_end_of_design -= 7
 
     @slurp.color_blocks.each_with_index do |color, nr|
-      if @colorblocks_to_dump.include?(nr)
+      if @colorblocks_to_dump.include?(nr + 1)
         @embroiderysummary_bytes_to_eof += color[:blocksize]
         @designblock_bytes_to_end_of_design += color[:blocksize]
         @extend_stitch_count += color[:nr_stitches]
@@ -426,7 +426,7 @@ class Dump
 
   def write_color_blocks
     @slurp.color_blocks.each_with_index do |color, nr|
-      if @colorblocks_to_dump.include?(nr)
+      if @colorblocks_to_dump.include?(nr + 1)
         carbon_copy(color[:cursor], color[:blocksize])
       end
     end
@@ -437,10 +437,9 @@ end
 class VP3split
   include Vp3BinaryFileData
 
-  def initialize(filename_in, filename_out)
+  def initialize filename_in
     @filename_in = filename_in
-    @filename_out = filename_out
-    @file_in = File.open(@filename_in, 'rb')
+    @file_in = File.open(@filename_in + '.vp3', 'rb')
   end
 
   def deinit
@@ -457,7 +456,7 @@ class VP3split
   end
 
   def dump(colors_to_dump, name_extra)
-    @file_out = File.open(@filename_out, 'wb')
+    @file_out = File.open(@filename_in + name_extra + '.vp3', 'wb')
     @dump = Dump.new(@file_in, @file_out, @slurp, colors_to_dump)
     @dump.calculate
     @dump.write_header
@@ -470,8 +469,8 @@ class VP3split
 
 end
 
-vp3_split = VP3split.new('test.vp3', 'out.vp3')
+vp3_split = VP3split.new'essie'
 vp3_split.slurp
-vp3_split.dump((0..20).to_a, '-aap')
-#vp3_split.dump((21..30).to_a,  '-noot')
+vp3_split.dump((1..10).to_a, '-01')
+vp3_split.dump((11..20).to_a, '-02')
 vp3_split.deinit
