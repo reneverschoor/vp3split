@@ -364,14 +364,40 @@ class Dump
 
   def calculate
     # TODO
-    puts "colorblocks to dump = #{@colorblocks_to_dump}"
+    puts
+    # puts "colorblocks to dump = #{@colorblocks_to_dump}"
 
-    # EmbroiderySummary bytes_to_eof
-    p @slurp.embroidery_summary.data_size
-    @slurp.color_blocks.each_with_index do |color, i|
-      p color
+    extend_stitch_count = 0
+    extend_thread_change_count = 0
+    designblock_color_count = 0
+
+    embroiderysummary_bytes_to_eof = 0
+    embroiderysummary_bytes_to_eof += @slurp.extend.data_size
+    embroiderysummary_bytes_to_eof += @slurp.design_block.data_size
+    embroiderysummary_bytes_to_eof += 2
+
+    designblock_bytes_to_end_of_design = 0
+    designblock_bytes_to_end_of_design += @slurp.design_block.data_size
+    designblock_bytes_to_end_of_design -= 7
+
+
+    @slurp.color_blocks.each_with_index do |color, nr|
+      if @colorblocks_to_dump.include?(nr)
+        # p color
+        embroiderysummary_bytes_to_eof += color[:blocksize]
+        designblock_bytes_to_end_of_design += color[:blocksize]
+        extend_stitch_count += color[:nr_stitches]
+        extend_thread_change_count += 1
+        designblock_color_count +=1
+      end
     end
 
+    puts "Calculated:"
+    puts "EmbroiderySummary bytes_to_eof = #{embroiderysummary_bytes_to_eof}"
+    puts "Extend stitch_count = #{extend_stitch_count}"
+    puts "Extend thread_change_count = #{extend_thread_change_count}"
+    puts "DesignBlock bytes_to_end_of_design = #{designblock_bytes_to_end_of_design}"
+    puts "DesignBlock color_count = #{designblock_color_count}"
   end
 
   def write_header
@@ -408,16 +434,11 @@ class VP3split
   def initialize(filename_in, filename_out)
     @filename_in = filename_in
     @filename_out = filename_out
-  end
-
-  def open_files
     @file_in = File.open(@filename_in, 'rb')
-    @file_out = File.open(@filename_out, 'wb')
   end
 
-  def close_files
+  def deinit
     @file_in.close
-    @file_out.close
   end
 
   def slurp
@@ -429,7 +450,8 @@ class VP3split
     @slurp.read_color_blocks
   end
 
-  def dump colors_to_dump
+  def dump(colors_to_dump, name_extra)
+    @file_out = File.open(@filename_out, 'wb')
     @dump = Dump.new(@file_in, @file_out, @slurp, colors_to_dump)
     @dump.calculate
     @dump.write_header
@@ -437,16 +459,16 @@ class VP3split
     @dump.write_extend
     @dump.write_design_block
     @dump.write_color_blocks
+    @file_out.close
   end
 
 end
 
 vp3_split = VP3split.new('test.vp3', 'out.vp3')
-vp3_split.open_files
 vp3_split.slurp
-vp3_split.dump [0..99]
-vp3_split.close_files
-
+vp3_split.dump((0..20).to_a, '-aap')
+vp3_split.dump((21..30).to_a,  '-noot')
+vp3_split.deinit
 exit
 
 
