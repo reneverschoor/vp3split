@@ -282,7 +282,7 @@ class ColorBlocks
         nr_stitches += 1
         offset += 2  # 1 byte dx + 1 byte dy
       end
-      if total_bytes_to_read - offset <= 2
+      if total_bytes_to_read - offset < 2
         read_stitches = false
       end
 
