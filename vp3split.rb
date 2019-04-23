@@ -160,6 +160,7 @@ class ColorBlocks
 
   attr_reader :cursor_start
   attr_reader :data_size
+  attr_reader :color_blocks
 
   def initialize(file, color_block_count)
     @file = file
@@ -329,8 +330,8 @@ class Slurp
   end
 
   def read_color_blocks
-    @color_blocks = ColorBlocks.new(@file_in, @design_block.color_block_count)
-    color_blocks = @color_blocks.read_data
+    blocks = ColorBlocks.new(@file_in, @design_block.color_block_count)
+    @color_blocks = blocks.read_data
     total_stitches = 0
     color_blocks.each_with_index do |color, i|
       print "Color \##{i + 1} - "
@@ -354,10 +355,23 @@ class Dump
 
   attr_reader :slurp
 
-  def initialize(file_in, file_out, slurp)
+  def initialize(file_in, file_out, slurp, colorblocks_to_dump)
     @file_in = file_in
     @file_out = file_out
     @slurp = slurp
+    @colorblocks_to_dump = colorblocks_to_dump
+  end
+
+  def calculate
+    # TODO
+    puts "colorblocks to dump = #{@colorblocks_to_dump}"
+
+    # EmbroiderySummary bytes_to_eof
+    p @slurp.embroidery_summary.data_size
+    @slurp.color_blocks.each_with_index do |color, i|
+      p color
+    end
+
   end
 
   def write_header
@@ -382,7 +396,7 @@ class Dump
   end
 
   def write_color_blocks
-    carbon_copy(@slurp.color_blocks)
+    #carbon_copy(@slurp.color_blocks)
     # TODO Only write some color_blocks
   end
 
@@ -415,8 +429,9 @@ class VP3split
     @slurp.read_color_blocks
   end
 
-  def dump
-    @dump = Dump.new(@file_in, @file_out, @slurp)
+  def dump colors_to_dump
+    @dump = Dump.new(@file_in, @file_out, @slurp, colors_to_dump)
+    @dump.calculate
     @dump.write_header
     @dump.write_embroidery_summary
     @dump.write_extend
@@ -429,7 +444,7 @@ end
 vp3_split = VP3split.new('test.vp3', 'out.vp3')
 vp3_split.open_files
 vp3_split.slurp
-vp3_split.dump
+vp3_split.dump [0..99]
 vp3_split.close_files
 
 exit
