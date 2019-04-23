@@ -251,7 +251,7 @@ class ColorBlocks
     nr_80_02 = 0
     nr_80_03 = 0
 
-    nr_stitches = 2  # Somehow start counter at 2?
+    nr_stitches = 0
     read_stitches = true
     long_form = false
     while read_stitches
