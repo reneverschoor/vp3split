@@ -437,6 +437,8 @@ end
 class VP3split
   include Vp3BinaryFileData
 
+  attr_reader :data
+
   def initialize filename_in
     @filename_in = filename_in
     @file_in = File.open(@filename_in + '.vp3', 'rb')
@@ -446,18 +448,18 @@ class VP3split
     @file_in.close
   end
 
-  def slurp
-    @slurp = Slurp.new(@file_in)
-    @slurp.read_header
-    @slurp.read_embroidery_summary
-    @slurp.read_extend
-    @slurp.read_design_block
-    @slurp.read_color_blocks
+  def slurp!
+    @data = Slurp.new(@file_in)
+    @data.read_header
+    @data.read_embroidery_summary
+    @data.read_extend
+    @data.read_design_block
+    @data.read_color_blocks
   end
 
   def dump(colors_to_dump, name_extra)
     @file_out = File.open(@filename_in + name_extra + '.vp3', 'wb')
-    @dump = Dump.new(@file_in, @file_out, @slurp, colors_to_dump)
+    @dump = Dump.new(@file_in, @file_out, @data, colors_to_dump)
     @dump.calculate
     @dump.write_header
     @dump.write_embroidery_summary
@@ -466,11 +468,39 @@ class VP3split
     @dump.write_color_blocks
     @file_out.close
   end
-
 end
 
-vp3_split = VP3split.new'essie'
-vp3_split.slurp
-vp3_split.dump((1..10).to_a, '-01')
-vp3_split.dump((11..20).to_a, '-02')
+filename = ARGV[0]
+abort("Usage: ruby #{__FILE__} <filename_without_extension>") unless filename
+
+vp3_split = VP3split.new(filename)
+vp3_split.slurp! 
+
+STITCH_LIMIT = 50000
+current_part = 1
+current_colors = []
+current_stitches = 0
+
+vp3_split.data.color_blocks.each_with_index do |color_block, index|
+  color_nr = index + 1
+  stitches = color_block[:nr_stitches]
+
+  if (current_stitches + stitches > STITCH_LIMIT) && !current_colors.empty?
+    suffix = sprintf("-%02d", current_part)
+    vp3_split.dump(current_colors, suffix)
+
+    current_part += 1
+    current_stitches = 0
+    current_colors = []
+  end
+
+  current_colors << color_nr
+  current_stitches += stitches
+end
+
+unless current_colors.empty?
+  suffix = sprintf("-%02d", current_part)
+  vp3_split.dump(current_colors, suffix)
+end
+
 vp3_split.deinit
